@@ -10,10 +10,12 @@ Six features are proposed, each implemented as `feature(submission_id, t)` in [s
 |---|---|---|---|
 | `agent_hist_conversion_rate` | Agent's historical conversion rate — must be computed from the training fold only (see leakage note) | Higher → more likely to bind | Yes |
 | `event_count` | Total events of any type up to day t | Higher → more likely | Yes |
-| `quote_received` | Binary: has a `QUOTE_RECEIVED` event occurred by day t? | 1 → strong positive signal | No |
+| `quote_received` | Count of `QUOTE_RECEIVED` events up to day t | Higher → more likely | No |
+| `inbound_email_count` | Number of inbound emails received up to day t | Higher → more likely | No |
 | `outbound_email_count` | Number of outbound emails sent up to day t | Higher → more likely | No |
 | `total_attachments` | Total email attachments (inbound + outbound) up to day t | Higher → more likely | No |
 | `median_inter_event_gap_hours` | Median hours between consecutive events up to day t | Lower → more likely (faster cadence = active deal) | No |
+| `days_since_last_event` | Days between the most recent event and cutoff t; equals t if no events | Lower → more likely (recency of activity) | No |
 
 > **Leakage note:** `agent_hist_conversion_rate` must be computed from the training fold only. Computing it on the full dataset before the train/test split leaks label information into the test set.
 

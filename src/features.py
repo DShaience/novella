@@ -49,9 +49,9 @@ def quote_received(
     submissions_df: pd.DataFrame,
 ) -> int:
     """
-    Binary flag: 1 if a QUOTE_RECEIVED event occurred by day t, else 0.
+    Number of QUOTE_RECEIVED events up to day t.
 
-    Raises ValueError at t=0 — a quote cannot meaningfully arrive
+    Raises ValueError at t=0 — quotes cannot meaningfully arrive
     at the moment of submission creation.
     """
     if t == 0:
@@ -66,7 +66,7 @@ def quote_received(
         & (events_df["event_type"] == "QUOTE_RECEIVED")
         & (events_df["event_date"] <= cutoff)
     )
-    return int(mask.any())
+    return int(mask.sum())
 
 
 def outbound_email_count(
@@ -121,6 +121,66 @@ def total_attachments(
         & (events_df["event_date"] <= cutoff)
     )
     return int(events_df.loc[mask, "email_attachment_count"].sum())
+
+
+def inbound_email_count(
+    submission_id: int,
+    t: int,
+    events_df: pd.DataFrame,
+    submissions_df: pd.DataFrame,
+) -> int:
+    """
+    Number of inbound emails received up to day t.
+
+    Raises ValueError at t=0 — inbound activity is uniformly
+    zero at creation and carries no signal.
+    """
+    if t == 0:
+        raise ValueError("inbound_email_count is not defined at t=0.")
+
+    created_date = submissions_df.loc[
+        submissions_df["submissionId"] == submission_id, "createdDate"
+    ].iloc[0]
+    cutoff = created_date + pd.Timedelta(days=t)
+    mask = (
+        (events_df["submissionId"] == submission_id)
+        & (events_df["event_type"] == "EMAIL_INBOUND")
+        & (events_df["event_date"] <= cutoff)
+    )
+    return int(mask.sum())
+
+
+def days_since_last_event(
+    submission_id: int,
+    t: int,
+    events_df: pd.DataFrame,
+    submissions_df: pd.DataFrame,
+) -> float:
+    """
+    Days elapsed between the most recent event and cutoff day t.
+
+    Higher values indicate a stalling submission — activity has dried up.
+    Returns t if no events exist in the window (silent since creation).
+
+    Raises ValueError at t=0.
+    """
+    if t == 0:
+        raise ValueError("days_since_last_event is not defined at t=0.")
+
+    created_date = submissions_df.loc[
+        submissions_df["submissionId"] == submission_id, "createdDate"
+    ].iloc[0]
+    cutoff = created_date + pd.Timedelta(days=t)
+    sub_events = events_df[
+        (events_df["submissionId"] == submission_id)
+        & (events_df["event_date"] <= cutoff)
+    ]
+    if sub_events.empty:
+        return float(t)
+    last_event_day = (
+        (sub_events["event_date"].max() - created_date).total_seconds() / 86400
+    )
+    return float(t - last_event_day)
 
 
 def median_inter_event_gap_hours(
