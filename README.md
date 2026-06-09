@@ -89,19 +89,3 @@ At `t=0`, agent history dominates — no event data exists yet. From `t=7` onwar
 
 ![Feature correlations](output/eda_figures/09_feature_correlations.png)
 
----
-
-## Features
-
-Six features are proposed, each a function `feature(submission_id, t)` in [src/features.py](src/features.py).
-
-| Feature | Description | Signal direction | Available at t=0 |
-|---|---|---|---|
-| `agent_hist_conversion_rate` | Agent's historical conversion rate (training fold only — see leakage note below) | Higher → more likely to bind | Yes |
-| `event_count` | Total events of any type up to day t | Higher → more likely | Yes |
-| `quote_received` | Binary: has a `QUOTE_RECEIVED` event occurred by day t? | 1 → strong positive signal | No |
-| `outbound_email_count` | Number of outbound emails sent up to day t | Higher → more likely | No |
-| `total_attachments` | Total email attachments (inbound + outbound) up to day t | Higher → more likely | No |
-| `median_inter_event_gap_hours` | Median hours between consecutive events up to day t | Lower → more likely (faster cadence = active deal) | No |
-
-> **Leakage note:** `agent_hist_conversion_rate` must be computed from the training fold only. Computing it on the full dataset before splitting would leak label information into the test set.
