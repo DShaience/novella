@@ -296,9 +296,9 @@ def plot_feature_importance(model, output_dir):
 # ── Metrics ────────────────────────────────────────────────────────────────
 
 def print_metrics(results):
-    print("\n── LOO-CV Metrics ──────────────────────────────")
+    print("\n-- LOO-CV Metrics ------------------------------")
     print(f"{'':>6}  {'ROC-AUC':>9}  {'PR-AUC':>8}")
-    print("─" * 32)
+    print("-" * 32)
     for t_val in T_VALUES + ["all"]:
         sub  = results if t_val == "all" else results[results["t"] == t_val]
         y, s = sub["label"].values, sub["score"].values
