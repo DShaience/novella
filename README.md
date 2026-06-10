@@ -32,13 +32,13 @@ python -m ipykernel install --user --name novella --display-name "novella"
 Score a single submission at all time windows:
 
 ```bash
-python src/predict.py --submission-id 42
+python src/predict.py --submission-id 67
 ```
 
 Score a single submission at a specific time window:
 
 ```bash
-python src/predict.py --submission-id 42 --t 7
+python src/predict.py --submission-id 67 --t 7
 ```
 
 Score all submissions:
