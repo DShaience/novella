@@ -13,13 +13,13 @@ Training script: [src/train.py](src/train.py)
 - **Single model with `t` as a feature** — one model handles all time windows; `t` is passed as an input alongside the activity features.
 - **One model per t, dispatched at call time** — three independent models routed by an `if/else` on `t`.
 
-We chose the **single model** approach. The three-model dispatcher is technically cleaner (the prediction problem genuinely differs at t=0 vs. t=30) but is likely over-engineering too. Including `t` as a feature lets a tree-based model learn t-conditional split thresholds implicitly — e.g. "if t=7 AND outbound_email_count > 3" — without hand-crafting the interactions. This was a more efficient option.
+We chose the **single model** approach. The three-model dispatcher could, theoretically, be cleaner (the prediction problem genuinely differs at t=0 vs. t=30) but is likely over-engineering the solution: there's very little data, and there are essentially no significant features for `t=0`. If the data was richer, it might have been worth exploring to train a dedicated model at least for t=0 vs the rest. That said, I've decided to go for a single model: including `t` as a feature lets a tree-based model learn t-conditional split thresholds implicitly — e.g. "if t=7 AND outbound_email_count > 3" — without hand-crafting the interactions. This was a more efficient option, and better suited to the amount of data we posses. 
 
 ### Handling Class Imbalance
 
 The dataset is heavily imbalanced (~13% positive, ratio ≈ 6.5:1). Options considered:
 
-- **Sampling strategies** (SMOTE, undersampling) — not applied; the dataset is not large enough to absorb the information loss from undersampling, and SMOTE on this feature set adds complexity without clear benefit at this scale.
+- **Sampling strategies** (SMOTE, undersampling) — not applied; the dataset is not large enough to absorb the information loss from undersampling, and SMOTE on this feature set adds complexity without clear benefit at this scale. If the data was richer or with more features SMOTE (or similar data generation methods) would have been a good approach to try. Instead we opted to using a different approach for sampling data and validating the model (see the Evaluation section below).
 - **`scale_pos_weight`** (XGBoost native) — applied. Set to `(# negatives) / (# positives)` per fold, upweighting bound submissions during training. Equivalent to `class_weight='balanced'` in sklearn, but computed fresh each LOO fold to avoid leakage.
 
 ### Model Choice
@@ -28,7 +28,7 @@ The dataset is heavily imbalanced (~13% positive, ratio ≈ 6.5:1). Options cons
 |---|---|---|
 | Logistic Regression | Yes | Requires manual interaction terms for `t`-dependent features; linear assumption too restrictive |
 | Random Forest | Yes | Handles interactions well; used in significance analysis but doesn't naturally handle `t` as a context variable as cleanly as boosting |
-| **XGBoost (GBT)** | **Yes** | **Chosen.** Handles t-dependent feature interactions implicitly via tree splits, native NaN support (no imputation needed for sparse t=0 features), `scale_pos_weight` for imbalance, and well-understood behaviour on small tabular datasets |
+| **XGBoost (GBT)** | **Yes** (**Chosen.**) | Handles t-dependent feature interactions implicitly via tree splits, native NaN support (no imputation needed for sparse t=0 features), `scale_pos_weight` for imbalance, and well-understood behaviour on small tabular datasets |
 
 ### Tree Depth
 
