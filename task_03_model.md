@@ -45,6 +45,12 @@ Depth=2 was selected — best overall performance. It allows pairwise interactio
 
 ### Evaluation: LOO-CV
 
+With ~115 positive examples out of 881 submissions, standard k-fold cross-validation creates a fundamental problem: a 5-fold split yields only ~23 positives per test fold, which is too few for PR-AUC to be a stable estimate — a single fold's composition can swing the metric significantly. Repeated k-fold reduces variance but doesn't fix the thin-positive-class problem; it just averages over the same instability.
+
+LOO-CV sidesteps this entirely. By holding out one submission at a time, every positive is evaluated exactly once across all folds, and the aggregated scores cover the full dataset before any metric is computed. This gives PR-AUC and ROC-AUC a stable, representative ground truth to measure against — each submission contributes to the metric exactly as often as it should, regardless of class.
+
+A secondary benefit specific to this dataset: each submission appears at three t snapshots (t=0, t=7, t=30). The evaluation unit must be the submission, not the row — otherwise the three snapshots of the same submission could end up split across train and test, leaking label information. LOO-CV on `submission_id` enforces this naturally: all three rows of a submission are removed together for each fold, so the model never sees any snapshot of that submission during training when it is being evaluated.
+
 | CV method | Considered | Decision |
 |---|---|---|
 | Stratified k-fold (k=5) | Yes | ~23 positives per test fold — too few for stable metrics |
